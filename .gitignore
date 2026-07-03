@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+barreleye.db
 
 # Virtual environments
 .venv
@@ -12,3 +13,4 @@ wheels/
 # Other files
 .env
 .DS_Store
+*.json
