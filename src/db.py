@@ -34,7 +34,9 @@ def db_init():
             item_id TEXT NOT NULL,
             watched_at TEXT NOT NULL,
             playback_duration_sec INTEGER,
-            is_paused BOOLEAN
+            is_paused BOOLEAN,
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
+            FOREIGN KEY (item_id) REFERENCES items(item_id)
         );
 
         CREATE INDEX IF NOT EXISTS idx_watch_user ON watch_events(user_id);
@@ -100,3 +102,23 @@ def sync_watch_events():
         ))
     conn.commit()
     conn.close()
+
+def get_genres(item_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT genres FROM items WHERE item_id = ?", (item_id,))
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return result[0].split(",") if result[0] else []
+    return []
+
+def get_tags(item_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT tags FROM items WHERE item_id = ?", (item_id,))
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return result[0].split(",") if result[0] else []
+    return []
