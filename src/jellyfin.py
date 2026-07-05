@@ -62,3 +62,18 @@ def get_items():
     else:
         print(f"Error fetching items: {response.status_code}")
         return None
+    
+def check_if_avaliable(jellyfin_item_id):
+    """Checks if an item is available on the Jellyfin server."""
+    url = f"{jellyfin_url}/Items/{jellyfin_item_id}/PlaybackInfo"
+    headers = {
+        "X-Emby-Token": jellyfin_api_key
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return True
+    elif response.status_code == 404:
+        return False
+    else:
+        print(f"Error checking playback info: {response.status_code}")
+        return False
