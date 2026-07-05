@@ -8,15 +8,15 @@ import requests
 
 dotenv.load_dotenv()
 
-jellyfin_url = os.getenv("JELLYFIN_URL")
-jellyfin_api_key = os.getenv("JELLYFIN_API_KEY")
+JELLYFIN_URL = os.getenv("JELLYFIN_URL")
+JELLYFIN_API_KEY = os.getenv("JELLYFIN_API_KEY")
 
 def get_users():
     """Fetches all users from the Jellyfin server."""
     results = []
-    url = f"{jellyfin_url}/Users"
+    url = f"{JELLYFIN_URL}/Users"
     headers = {
-        "X-Emby-Token": jellyfin_api_key
+        "X-Emby-Token": JELLYFIN_API_KEY
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -33,9 +33,9 @@ def get_users():
 def get_items():
     """Fetches all items from the Jellyfin server."""
     results = []
-    url = f"{jellyfin_url}/Items"
+    url = f"{JELLYFIN_URL}/Items"
     headers = {
-        "X-Emby-Token": jellyfin_api_key
+        "X-Emby-Token": JELLYFIN_API_KEY
     }
     params = {
         "Recursive": "true",
@@ -65,9 +65,9 @@ def get_items():
     
 def check_if_avaliable(jellyfin_item_id):
     """Checks if an item is available on the Jellyfin server."""
-    url = f"{jellyfin_url}/Items/{jellyfin_item_id}/PlaybackInfo"
+    url = f"{JELLYFIN_URL}/Items/{jellyfin_item_id}/PlaybackInfo"
     headers = {
-        "X-Emby-Token": jellyfin_api_key
+        "X-Emby-Token": JELLYFIN_API_KEY
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -77,3 +77,29 @@ def check_if_avaliable(jellyfin_item_id):
     else:
         print(f"Error checking playback info: {response.status_code}")
         return False
+
+def jellyfin_id_to_tmdb_id(user_id, jellyfin_id):
+    """Given a Jellyfin item ID, return its TMDB ID (if present)."""
+    url = f"{JELLYFIN_URL}/Users/{user_id}/Items/{jellyfin_id}"
+    resp = requests.get(url, headers={"X-Emby-Token": JELLYFIN_API_KEY})
+    resp.raise_for_status()
+    item = resp.json()
+    return item.get("ProviderIds", {}).get("Tmdb")
+
+def tmdb_id_to_jellyfin_id(tmdb_id, user_id, include_item_types: str = "Movie,Series"):
+    """
+    Given a TMDB ID, search the Jellyfin library and return the matching item ID.
+    """
+    url = f"{JELLYFIN_URL}/Users/{user_id}/Items"
+    params = {
+        "Recursive": "true",
+        "IncludeItemTypes": include_item_types,
+        "Fields": "ProviderIds",
+    }
+    resp = requests.get(url, headers={"X-Emby-Token": JELLYFIN_API_KEY}, params=params)
+    resp.raise_for_status()
+    items = resp.json().get("Items", [])
+    for item in items:
+        if item.get("ProviderIds", {}).get("Tmdb") == str(tmdb_id):
+            return item["Id"]
+    return None
